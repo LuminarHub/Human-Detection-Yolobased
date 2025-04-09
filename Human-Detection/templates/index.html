@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container container-bg">
+        <header class="header">
+            <h1 class="title">Human Detection System</h1>
+            <button id="stop-camera" class="stop-btn">Stop Camera</button>
+        </header>
+
+        <main>
+            <div class="video-container">
+                <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Video Feed">
+            </div>
+            <div id="stats" class="stats-container"></div>
+        </main>
+    </div>
+
+    <script>
+        function updateStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(data => {
+                    const statsHtml = `
+                        <div class="stat-item">
+                            <span class="stat-label">Camera Status:</span>
+                            <span class="stat-value">${data.is_camera_running ? 'Running' : 'Stopped'}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Current Humans:</span>
+                            <span class="stat-value">${data.current_human_count}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Max Humans Detected:</span>
+                            <span class="stat-value">${data.max_human_count}</span>
+                        </div>
+                    `;
+                    document.getElementById('stats').innerHTML = statsHtml;
+                });
+        }
+
+        // Stop camera button handler
+        document.getElementById('stop-camera').addEventListener('click', function() {
+            fetch('/stop_camera')
+                .then(response => response.json())
+                .then(data => {
+                    alert('Camera stopped');
+                    // Optional: reload page or update UI
+                    location.reload();
+                });
+        });
+
+        // Update stats every 2 seconds
+        setInterval(updateStats, 2000);
+    </script>
+</body>
+</html>

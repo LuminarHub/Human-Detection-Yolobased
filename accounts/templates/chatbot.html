@@ -1,0 +1,377 @@
+{% extends "main.html" %}
+{% block bot %}
+{% load static %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f3f4f6;
+    }
+    
+    .chat-container {
+        max-height: 400px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(136, 116, 116, 0.2) transparent;
+    }
+    
+    .chat-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chat-container::-webkit-scrollbar-thumb {
+        background-color: rgba(111, 105, 105, 0.2);
+        border-radius: 10px;
+    }
+
+    .message-bubble {
+        transition: all 0.3s ease;
+    }
+
+    .message-bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .typing-indicator {
+        display: inline-block;
+    }
+
+    .typing-indicator span {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: #9ca3af;
+        border-radius: 50%;
+        margin: 0 2px;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(1) {
+        animation-delay: 0s;
+    }
+
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+        0%, 60%, 100% {
+            transform: translateY(0);
+        }
+        30% {
+            transform: translateY(-4px);
+        }
+    }
+
+    .send-button {
+        transition: all 0.2s ease;
+    }
+
+    .send-button:hover {
+        transform: scale(1.05);
+    }
+
+    .send-button:active {
+        transform: scale(0.95);
+    }
+</style>
+
+<div class="flex items-center justify-center p-4 md:p-8 mt-5" >
+    <div class="bg-white w-full rounded-xl shadow-lg border border-gray-200 overflow-hidden max-w-7xl" >
+        <div class="bg-gradient-to-r from-gray-800 to-gray-900 p-4 text-white">
+            <div class="flex items-center justify-between" >
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-blue-600 rounded-full">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">Human Detector AI Assistant</h2>
+                        <p class="text-xs text-gray-300 mt-1">Intelligent Campus Guide • Always Online</p>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="clearChat" class="p-2 rounded-full hover:bg-gray-700 transition" title="Clear chat">
+                        <i class="fas fa-trash-alt text-gray-300 hover:text-white"></i>
+                    </button>
+                    <button id="toggleSound" class="p-2 rounded-full hover:bg-gray-700 transition" title="Toggle sound">
+                        <i class="fas fa-volume-up text-gray-300 hover:text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatBox" class="chat-container p-4 space-y-4 h-[300px] overflow-y-auto bg-gray-50">
+            <div class="flex items-start mb-4 animate-fade-in">
+                <div class="flex-shrink-0 mr-3">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                </div>
+                <div class="message-bubble bg-white p-3 rounded-lg max-w-[80%] shadow-sm border border-gray-200">
+                    <p class="text-gray-700">
+                        Welcome to Human Detector AI Assistant! I'm here to help you with any questions about our human detection technology, campus navigation, or general information. How can I assist you today?
+                    </p>
+                    <span id="assistant-timestamp" class="text-xs text-gray-400 block mt-1">Assistant • Just now</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="typingIndicator" class="px-4 py-2 hidden">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 mr-3">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t p-3 bg-white">
+            <div class="flex space-x-2">
+                <div class="flex-grow relative">
+                    <input type="text" id="userInput" name="userInput" placeholder="Ask me anything..." 
+                           class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="voiceInput" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 transition">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+                <button onclick="sendMessage()" class="send-button bg-gradient-to-r from-blue-600 to-blue-800 text-white p-3 rounded-lg hover:opacity-90 transition duration-300" id="formSubmit">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="mt-2 text-xs text-gray-500 text-center">
+                <p>Try asking about human detection technology or campus facilities</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    let soundEnabled = false;
+    let isListening = false;
+    
+    window.addEventListener('DOMContentLoaded', () => {
+        updateTimestamp();
+        animateWelcomeMessage();
+    });
+    
+    function updateTimestamp() {
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timestampElement = document.getElementById('assistant-timestamp');
+        timestampElement.textContent = `Assistant • ${currentTime}`;
+    }
+    
+    function animateWelcomeMessage() {
+        const welcomeMessage = document.querySelector('.message-bubble');
+        welcomeMessage.style.opacity = '0';
+        welcomeMessage.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            welcomeMessage.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            welcomeMessage.style.opacity = '1';
+            welcomeMessage.style.transform = 'translateY(0)';
+        }, 100);
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('userInput');
+        const chatBox = document.getElementById('chatBox');
+        const message = input.value.trim();
+        
+        if (message === '') return;
+        
+        // Add user message
+        addUserMessage(message);
+        
+        // Show typing indicator
+        showTypingIndicator();
+        
+        // Send to backend
+        fetch('{% url "bot" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ userInput: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide typing indicator
+            hideTypingIndicator();
+            
+            // Add bot message with delay for natural feeling
+            setTimeout(() => {
+                addBotMessage(data.response);
+                
+                // Speak message if enabled
+                if (soundEnabled) {
+                    speakMessage(data.response);
+                }
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            hideTypingIndicator();
+            addBotMessage("Sorry, I encountered an error. Please try again.");
+        });
+        
+        input.value = '';
+    }
+    
+    function addUserMessage(message) {
+        const chatBox = document.getElementById('chatBox');
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'flex justify-end mb-4';
+        userMessageDiv.innerHTML = `
+            <div class="message-bubble bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-lg max-w-[80%] shadow-sm">
+                <p>${escapeHTML(message)}</p>
+                <span class="text-xs text-blue-100 block mt-1">You • ${currentTime}</span>
+            </div>
+        `;
+        
+        chatBox.appendChild(userMessageDiv);
+        scrollToBottom();
+    }
+    
+    function addBotMessage(message) {
+        const chatBox = document.getElementById('chatBox');
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const botMessageDiv = document.createElement('div');
+        botMessageDiv.className = 'flex items-start mb-4';
+        botMessageDiv.innerHTML = `
+            <div class="flex-shrink-0 mr-3">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 flex items-center justify-center">
+                    <i class="fas fa-robot text-white text-sm"></i>
+                </div>
+            </div>
+            <div class="message-bubble bg-white p-3 rounded-lg max-w-[80%] shadow-sm border border-gray-200">
+                <p class="text-gray-700" id="output">${message}</p>
+                <span class="text-xs text-gray-400 block mt-1">Assistant • ${currentTime}</span>
+            </div>
+        `;
+        
+        // Add with animation
+        botMessageDiv.style.opacity = '0';
+        botMessageDiv.style.transform = 'translateY(10px)';
+        chatBox.appendChild(botMessageDiv);
+        
+        // Trigger animation
+        setTimeout(() => {
+            botMessageDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            botMessageDiv.style.opacity = '1';
+            botMessageDiv.style.transform = 'translateY(0)';
+            scrollToBottom();
+        }, 10);
+    }
+    
+    function showTypingIndicator() {
+        document.getElementById('typingIndicator').classList.remove('hidden');
+        scrollToBottom();
+    }
+    
+    function hideTypingIndicator() {
+        document.getElementById('typingIndicator').classList.add('hidden');
+    }
+    
+    function scrollToBottom() {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    
+    function escapeHTML(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function speakMessage(msg) {
+        const message = new SpeechSynthesisUtterance(msg);
+        window.speechSynthesis.speak(message);
+    }
+    
+    document.getElementById('userInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    document.getElementById('toggleSound').addEventListener('click', function() {
+        soundEnabled = !soundEnabled;
+        const icon = this.querySelector('i');
+        
+        if (soundEnabled) {
+            icon.classList.remove('fa-volume-up');
+            icon.classList.add('fa-volume-mute');
+            this.title = 'Mute sound';
+        } else {
+            icon.classList.remove('fa-volume-mute');
+            icon.classList.add('fa-volume-up');
+            this.title = 'Enable sound';
+        }
+    });
+    
+    document.getElementById('clearChat').addEventListener('click', function() {
+        const chatBox = document.getElementById('chatBox');
+        // Keep only the welcome message
+        while (chatBox.children.length > 1) {
+            chatBox.removeChild(chatBox.lastChild);
+        }
+    });
+    
+    document.getElementById('voiceInput').addEventListener('click', function() {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert('Voice input is not supported in your browser');
+            return;
+        }
+        
+        if (isListening) {
+            return; // Already listening
+        }
+        
+        isListening = true;
+        const icon = this.querySelector('i');
+        icon.classList.remove('fa-microphone');
+        icon.classList.add('fa-microphone-alt');
+        icon.classList.add('text-blue-600');
+        
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('userInput').value = transcript;
+        };
+        
+        recognition.onend = function() {
+            isListening = false;
+            icon.classList.remove('fa-microphone-alt');
+            icon.classList.remove('text-blue-600');
+            icon.classList.add('fa-microphone');
+        };
+        
+        recognition.start();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block bot %}
+<main>
+    <section class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl font-bold mb-4">Update Your Profile</h1>
+            <p class="text-lg mb-6">Modify your account information</p>
+        </div>
+    </section>
+
+    <section class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="mb-4 p-4 bg-red-100 text-red-700 border border-red-200 rounded-lg">
+                    <p class="font-semibold">Please correct the following errors:</p>
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="mb-4">
+                    <label for="{{ form.username.id_for_label }}" class="block text-gray-700 font-medium mb-2">Username</label>
+                    {{ form.username }}
+                    {% if form.username.help_text %}
+                        <p class="text-gray-500 text-sm mt-1">{{ form.username.help_text }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-6">
+                    <label for="{{ form.email.id_for_label }}" class="block text-gray-700 font-medium mb-2">Email</label>
+                    {{ form.email }}
+                    {% if form.email.help_text %}
+                        <p class="text-gray-500 text-sm mt-1">{{ form.email.help_text }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="flex justify-between">
+                    <a href="{% url 'profile' %}" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

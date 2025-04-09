@@ -1,0 +1,12 @@
+{
+  "video_url": 0,
+  "model_weights_path": "./yolov8n.pt",
+
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "sender_email": "aditya.quitzon@ethereal.email",
+  "sender_password": "gBypdW1VdsZw6av96y",
+  "recipient_email": "sreejithsuresh157@gmail.com",
+
+  "database_path": "./detections.db"
+}
