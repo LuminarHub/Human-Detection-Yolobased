@@ -51,7 +51,7 @@ class RegView(CreateView):
 class MainPage(TemplateView):
     template_name = 'main.html'
 
-class About(TemplateView):
+class AboutView(TemplateView):
     template_name = 'about.html'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -451,10 +451,7 @@ class ObjectView(TemplateView):
     """View for rendering the object detection page."""
     template_name = 'object.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['data'] = Userdetails.objects.all().first()
-        return context  
+    
 
 def start_detection(request):
     """Start the detection process."""
